@@ -1,8 +1,10 @@
 from rest_framework.response import Response
 from django.http import JsonResponse
 from rest_framework.decorators import api_view
+from rest_framework import status
 from .models import Book, Author
 from .serializers import BookSerializer, AuthorSerializer
+from django.db import transaction
 
 # Using raw SQL for complex queries
 from django.db import connection
@@ -11,39 +13,25 @@ from django.db import connection
 # Using select_related to fetch related author data in one query
 @api_view(['GET'])
 def books_with_authors(request):
-    books = Book.objects.select_related('author').all()
+    # Retrieve all books with author and tags (optimized with select_related and prefetch_related)
+    books = Book.objects.select_related('author').prefetch_related('tags').all()
     serializer = BookSerializer(books, many=True)
-    return JsonResponse(serializer.data, safe=False)
-
-
-# Using prefetch_related to fetch many-to-many related tags
-@api_view(['GET'])
-def books_with_tags(request):
-    books = Book.objects.prefetch_related('tags').all()
-    serializer = BookSerializer(books, many=True)
-    return JsonResponse(serializer.data, safe=False)
-
-
-# Using only() to load specific fields (e.g., only title and author)
-@api_view(['GET'])
-def books_with_only_title(request):
-    books = Book.objects.only('title', 'author__name')
-    serializer = BookSerializer(books, many=True)
-    return JsonResponse(serializer.data, safe=False)
-
-
-@api_view(['GET'])
-def books_by_author_sql(request, author_id):
-    with connection.cursor() as cursor:
-        cursor.execute("SELECT * FROM library_book WHERE author_id = %s", [author_id])
-        books = cursor.fetchall()
-        # Simulate JSON response; ideally, transform data into a dictionary
-        response_data = [{'id': book[0], 'title': book[1]} for book in books]
-    return JsonResponse(response_data, safe=False)
+    return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 @api_view(['GET'])
 def get_authors(request):
     authors = Author.objects.all()
     serializer = AuthorSerializer(authors, many=True)
-    return JsonResponse(serializer.data, safe=False)
+    return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+@api_view(['POST'])
+def create_book(request):
+    serializer = BookSerializer(data=request.data)
+    if serializer.is_valid():
+        with transaction.atomic():
+            serializer.save()
+            # serialized_data = BookSerializer.custom_serialize_book(book_instance)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
