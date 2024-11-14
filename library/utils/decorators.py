@@ -1,5 +1,6 @@
 # Python Imports
 from functools import wraps
+import logging
 
 # Django Imports
 # from django.http import JsonResponse
@@ -42,20 +43,35 @@ def validator(required_fields):
     return decorator
 
 
+# Set up logging
+logger = logging.getLogger('best_practices_django')
+
+
 def logging(view_function):
     @wraps(view_function)
     def wrapper(request, *args, **kwargs):
+        try:
+            # Call the view function
+            # Check request origin and log it
+            origin = request.META.get('HTTP_HOST')
+            logger.info(f"Request origin: {origin}")
 
-        # Check request origin and log it
-        origin = request.META.get('HTTP_HOST')
-        print(f"Request origin: {origin}")
+            # Validate origin if configured
+            if getattr(settings, 'VALIDATE_ORIGIN', False) and origin not in getattr(settings, 'ALLOWED_ORIGINS', []):
+                return Response({"code": 405, "message": "Unable to entertain request"}, status=405)
 
-        # Validate origin if configured
-        if getattr(settings, 'VALIDATE_ORIGIN', False) and origin not in getattr(settings, 'ALLOWED_ORIGINS', []):
-            return Response({"code": 405, "message": "Unable to entertain request"}, status=405)
+            # Execute the view function and return its response
+            return view_function(request, *args, **kwargs)
 
-        # Execute the view function and return its response
-        return view_function(request, *args, **kwargs)
+        except Exception as e:
+            logger.error("An error occurred: %s", str(e), exc_info=True)
+
+            # Return a generic error message to the client
+            response = (
+                response_utils.get_response_object(response_code=status.HTTP_400_BAD_REQUEST,
+                                                   response_message="Something went wrong. Please try again later.")
+            )
+            return Response(response, status=status.HTTP_400_BAD_REQUEST)
 
     return wrapper
 
