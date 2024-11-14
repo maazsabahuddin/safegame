@@ -2,11 +2,12 @@
 from functools import wraps
 
 # Django Imports
-from django.http import JsonResponse
+# from django.http import JsonResponse
 from django.conf import settings
 
 # Rest framework Imports
 from rest_framework import status
+from rest_framework.response import Response
 
 # Local Imports
 from library.utils import response_utils
@@ -31,7 +32,7 @@ def validator(required_fields):
                 message = f"Missing parameter keys: {', '.join(missing_fields)}"
                 response = response_utils.get_response_object(response_code=status.HTTP_400_BAD_REQUEST,
                                                               response_message=message)
-                return JsonResponse(response, status=status.HTTP_400_BAD_REQUEST)
+                return Response(response, status=status.HTTP_400_BAD_REQUEST)
 
             # Pass validated data to the view function
             return view_function(request, *args, **kwargs)
@@ -51,7 +52,7 @@ def logging(view_function):
 
         # Validate origin if configured
         if getattr(settings, 'VALIDATE_ORIGIN', False) and origin not in getattr(settings, 'ALLOWED_ORIGINS', []):
-            return JsonResponse({"code": 405, "message": "Unable to entertain request"}, status=405)
+            return Response({"code": 405, "message": "Unable to entertain request"}, status=405)
 
         # Execute the view function and return its response
         return view_function(request, *args, **kwargs)
@@ -67,6 +68,6 @@ def blocked(view_function):
             response_code=301,
             response_message="This API is Depreciated"
         )
-        return JsonResponse(response, status=410)  # HTTP 410 Gone for deprecated endpoints
+        return Response(response, status=410)  # HTTP 410 Gone for deprecated endpoints
 
     return wrapper

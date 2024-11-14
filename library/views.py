@@ -6,6 +6,7 @@ from rest_framework import status
 # Local Imports
 from library.models.libray_model import Author, Book
 from library.serializers import BookSerializer, AuthorSerializer
+from library.utils import decorators
 
 # Django Imports
 from django.db import transaction
@@ -27,6 +28,7 @@ def get_authors(request):
 
 
 @api_view(['POST'])
+@decorators.validator(['title', 'author', 'tags'])
 def create_book(request):
     serializer = BookSerializer(data=request.data)
     if serializer.is_valid():
