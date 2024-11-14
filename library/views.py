@@ -9,10 +9,8 @@ from library.serializers import BookSerializer, AuthorSerializer
 
 # Django Imports
 from django.db import transaction
-# from django.http import JsonResponse
 
 
-# Using select_related to fetch related author data in one query
 @api_view(['GET'])
 def books_with_authors(request):
     # Retrieve all books with author and tags (optimized with select_related and prefetch_related)
