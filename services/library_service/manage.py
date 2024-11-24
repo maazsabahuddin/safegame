@@ -8,8 +8,8 @@ def main():
     """Run administrative tasks."""
     os.environ.setdefault(
         'DJANGO_SETTINGS_MODULE',
-        "best_practices_django.settings.development" if os.getenv("DJANGO_ENV") == "development"
-        else "best_practices_django.settings.production"
+        "library_service.settings.development" if os.getenv("DJANGO_ENV") == "development"
+        else "library_service.settings.production"
     )
     try:
         from django.core.management import execute_from_command_line

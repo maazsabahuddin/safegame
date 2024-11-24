@@ -1,5 +1,5 @@
 """
-URL configuration for best_practices_django project.
+URL configuration for library_service project.
 
 The `urlpatterns` list routes URLs to views. For more information please see:
     https://docs.djangoproject.com/en/5.1/topics/http/urls/

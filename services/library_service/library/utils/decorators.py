@@ -44,7 +44,7 @@ def validator(required_fields):
 
 
 # Set up logging
-logger = logging.getLogger('best_practices_django')
+logger = logging.getLogger('library_service')
 
 
 def logging(view_function):
